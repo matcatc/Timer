@@ -1,0 +1,9 @@
+Timer is a simple command line program for countdowns.
+
+I wrote it to replace gnome's timer applet when I moved over to wmii. It is
+(currently) not intended for precise times, but for simple things, like when
+the laundry will be done.
+
+This project is licensed under GNU GPL v. 3.0.
+
+Matthew Todd
