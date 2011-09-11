@@ -20,6 +20,8 @@
 #   enable/disable notify-send
 #   specify task (msg for notify-send)
 #   specify refresh rate (sleep duration)?
+#   change terminal title to that of the timer message?
+#       ex: timer: laundry
 
 import time
 import sys
@@ -90,7 +92,8 @@ def main():
     print("\n%s" % message)
 
     # TODO: make func?
-    subprocess.call(['notify-send', message])       # TODO: more informative message (get user msg?)
+    # use PIPE to hide stderr output
+    subprocess.call(['notify-send', message], stderr=subprocess.PIPE)
 
     # TODO: play sound
     subprocess.call(['play', '-v 100', notification_sound], stderr=subprocess.PIPE)
