@@ -20,8 +20,17 @@
 #   enable/disable notify-send
 #   specify task (msg for notify-send)
 #   specify refresh rate (sleep duration)?
-#   change terminal title to that of the timer message?
-#       ex: timer: laundry
+#
+# TODO: change terminal title to that of the timer message?
+#       ex: "timer: laundry"
+#
+# TODO: include default timer sound in repo
+#   create a custom one?
+#       choose a file format that's likely to be playable on all linux machines by default
+#
+# TODO: esc/q quits program while in countdown
+#   so user doesn't have to ctrl-c
+
 
 import time
 import sys
@@ -29,6 +38,8 @@ import os
 import subprocess
 
 notification_sound = '/usr/share/sounds/ubuntu/stereo/bell.ogg'
+
+DEFAULT_WIDTH_OFFSET = 10
 
 def getDuration():
     '''
@@ -38,6 +49,7 @@ def getDuration():
     done = False
     while not done:
         duration = input("Enter timer duration (in secs): ")        # TODO: handle other time formats
+                                                                    # will likely need to use a parse (e.g: PLY)
         try:
             duration = int(duration, 10)
             done = True
@@ -66,24 +78,28 @@ def get_progress_bar(duration, time_left, length):
     '''
     Computes the progress bar and returns it as a string.
     '''
-    percentageTime = (duration - time_left) / duration
+    percentageTime = min(1.0, (duration - time_left) / duration)
     percentageLength = int(length * percentageTime)
+    rest = length - percentageLength
 
-    return "[%s%s]" % ('='*percentageLength, '-'*(length - percentageLength))
+    progress_bar = "[%s%s]" % ('='*percentageLength, '-'*rest)
+    return progress_bar
 
 def main():
     duration, endTime = getDuration()
     message = get_message()
+    clear_line_terminal_code = "\033[2K"        # terminal code to clear line, b/c the number counts down, thus is shorter
 
     currentTime = time.time()
+    width_offset = DEFAULT_WIDTH_OFFSET
     while currentTime < endTime:
         currentTime = time.time()
 
-        screen_width = get_screen_width() - 10                           # TODO: magic numbers (this one is for time remaining)
-
         timeLeft = endTime - currentTime
 
-        print("%s %d \r" % (get_progress_bar(duration, timeLeft, screen_width-10), timeLeft), end="")
+        screen_width = get_screen_width() - width_offset
+
+        print("%s\r%s %d" % (clear_line_terminal_code, get_progress_bar(duration, timeLeft, screen_width), timeLeft), end="")
         sys.stdout.flush()
         time.sleep(.1)      # TODO: make sleep time dynamic?
                             # so that the progress bar is smooth (but will want to make the max 1 sec)
