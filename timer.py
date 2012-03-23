@@ -29,8 +29,13 @@ TODO: esc/q quits program while in countdown
 TODO: output in mixed unit formats
   Can also use timedelta to output time left w/ mixed units (will need to do a little math).
 
-TODO: check if ply installed and default to something
-  Default to just seconds?
+TODO: input duration grammar for docs
+  So users can know valid input grammar info.
+  Low priority, should be obvious enough that users don't need to be told explicitly. Tech-savy users can just look at the grammar.
+
+TODO: input end time instead of time duration
+  Will want to use command line switch?
+  Can build into grammar instead.
 '''
 
 
@@ -40,7 +45,13 @@ import os
 import subprocess
 from datetime import timedelta
 
-import time_parse
+try:
+    import time_parse
+    time_parse_enabled = True
+except Exception as e:
+    print('Failed to import time_parse(%s), defaulting to seconds only input' % e)
+    time_parse_enabled = False
+    
 
 DEFAULT_WIDTH_OFFSET = 10
 
@@ -55,19 +66,27 @@ def getDuration():
     '''
     done = False
     while not done:
-        duration = input("Enter timer duration: ")
         try:
-            result = time_parse.parser.parse(duration)
+            duration = input("Enter timer duration: ")
 
-            week = 52*result[time_parse.YEAR_ID] + result[time_parse.WEEK_ID]
-            delta = timedelta(weeks=week,
-                                days=result[time_parse.DAY_ID],
-                                hours=result[time_parse.HOUR_ID],
-                                minutes=result[time_parse.MIN_ID],
-                                seconds=result[time_parse.SEC_ID])
+            if(time_parse_enabled):
+                result = time_parse.parser.parse(duration)
 
-            duration = delta.total_seconds() # * 10
+                week = 52*result[time_parse.YEAR_ID] + result[time_parse.WEEK_ID]
+                delta = timedelta(weeks=week,
+                                    days=result[time_parse.DAY_ID],
+                                    hours=result[time_parse.HOUR_ID],
+                                    minutes=result[time_parse.MIN_ID],
+                                    seconds=result[time_parse.SEC_ID])
+
+                duration = delta.total_seconds()
+            else:
+                duration = int(duration)
+
             done = True
+        except EOFError:
+            print("")
+            sys.exit(0)
         except Exception as e:
             print("Invalid duration: %r" % duration)
 
