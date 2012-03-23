@@ -1,61 +1,72 @@
 #!/usr/bin/python3
-#
-# Simple (hopefully) script to do countdown timer stuff. Created to fill the
-# void left by gnome's timer applet when switching to a tiling wm.
-#
-# @note
-# At this time, there is little no support for playing sound files through
-# pre-packaged python3 libraries. Thus I (and any users) would have to manually
-# install the libraries to use them. Thus the use of subprocess instead.
-#
-# @author Matthew Todd
-# @date Sep 3 2011
+'''
+Simple (hopefully) script to do countdown timer stuff. Created to fill the
+void left by gnome's timer applet when switching to a tiling wm.
 
-# TODO: program options (config file?)
-#   specify duration
-#   specify progress bar length
-#   enable/disable sound
-#   specify sound volume
-#   specify sound file
-#   enable/disable notify-send
-#   specify task (msg for notify-send)
-#   specify refresh rate (sleep duration)?
-#
-# TODO: change terminal title to that of the timer message?
-#       ex: "timer: laundry"
-#
-# TODO: include default timer sound in repo
-#   create a custom one?
-#       choose a file format that's likely to be playable on all linux machines by default
-#
-# TODO: esc/q quits program while in countdown
-#   so user doesn't have to ctrl-c
-#
-# TODO: input format other than just seconds
-#   Use datetime.timedelta, whose init() allows for different units.
-#   Can also use timedelta to output time left in non-seconds (will need to do a little math).
+@note
+At this time, there is little no support for playing sound files through
+pre-packaged python3 libraries. Thus I (and any users) would have to manually
+install the libraries to use them. Thus the use of subprocess instead.
+
+@author Matthew Todd
+@date Sep 3 2011
+
+TODO: program options (config file?)
+  specify duration
+  specify progress bar length
+  enable/disable sound
+  specify sound volume
+  enable/disable notify-send
+  specify task (msg for notify-send/espeak)
+  specify refresh rate (sleep duration)?
+
+TODO: change terminal title to that of the timer message?
+      ex: "timer: laundry"
+
+TODO: esc/q quits program while in countdown
+  so user doesn't have to ctrl-c
+
+TODO: output in mixed unit formats
+  Can also use timedelta to output time left w/ mixed units (will need to do a little math).
+
+TODO: check if ply installed and default to something
+  Default to just seconds?
+'''
 
 
 import time
 import sys
 import os
 import subprocess
+from datetime import timedelta
 
-notification_sound = '/usr/share/sounds/ubuntu/stereo/bell.ogg'
+import time_parse
 
 DEFAULT_WIDTH_OFFSET = 10
+
 
 def getDuration():
     '''
     Gets the input from the user regarding the timer's duration/end time.
+
+    Uses time_parse so that user can input different time units.
+
     @return (duration, endtime)
     '''
     done = False
     while not done:
-        duration = input("Enter timer duration (in secs): ")        # TODO: handle other time formats
-                                                                    # will likely need to use a parse (e.g: PLY)
+        duration = input("Enter timer duration: ")
         try:
-            duration = int(duration, 10)
+            result = time_parse.parser.parse(duration)
+
+            week = 52*result[time_parse.YEAR_ID] + result[time_parse.WEEK_ID]
+            delta = timedelta(weeks=week,
+                                days=result[time_parse.DAY_ID],
+                                hours=result[time_parse.HOUR_ID],
+                                minutes=result[time_parse.MIN_ID],
+                                seconds=result[time_parse.SEC_ID])
+
+            duration = delta.total_seconds() # * 10
             done = True
         except Exception as e:
             print("Invalid duration: %r" % duration)
