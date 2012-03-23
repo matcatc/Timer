@@ -30,6 +30,10 @@
 #
 # TODO: esc/q quits program while in countdown
 #   so user doesn't have to ctrl-c
+#
+# TODO: input format other than just seconds
+#   Use datetime.timedelta, whose init() allows for different units.
+#   Can also use timedelta to output time left in non-seconds (will need to do a little math).
 
 
 import time
@@ -111,8 +115,9 @@ def main():
     # use PIPE to hide stderr output
     subprocess.call(['notify-send', message], stderr=subprocess.PIPE)
 
-    # TODO: play sound
-    subprocess.call(['play', '-v 100', notification_sound], stderr=subprocess.PIPE)
+    # play sound
+    # TODO: make func?
+    subprocess.call(['espeak', '-a 200', message], stderr=subprocess.PIPE)
 
     return 0
 
