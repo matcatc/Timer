@@ -36,6 +36,10 @@ TODO: input duration grammar for docs
 TODO: input end time instead of time duration
   Will want to use command line switch?
   Can build into grammar instead.
+
+TODO: window notification when timer done
+  So window manager can notify user that the timer is done. Especially useful if user misses notification msg and sound (e.g: afk).
+  Ex: pidgin does this.
 '''
 
 
