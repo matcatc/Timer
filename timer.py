@@ -23,9 +23,6 @@ TODO: program options (config file?)
 TODO: change terminal title to that of the timer message?
       ex: "timer: laundry"
 
-TODO: esc/q quits program while in countdown
-  so user doesn't have to ctrl-c
-
 TODO: output in mixed unit formats
   Can also use timedelta to output time left w/ mixed units (will need to do a little math).
 
@@ -107,6 +104,8 @@ def get_message():
 def get_screen_width():
     '''
     Gets the terminal width in characters.
+
+    TODO: could as use tput cols
     '''
     info = subprocess.check_output(['stty', 'size'])
     _, screen_width = info.split()
@@ -122,6 +121,75 @@ def get_progress_bar(duration, time_left, length):
 
     progress_bar = "[%s%s]" % ('='*percentageLength, '-'*rest)
     return progress_bar
+
+def get_user_command():
+    '''
+    Gets the command character from stdin, if any.
+
+    @note
+    This code is from/based on: http://docs.python.org/faq/library#how-do-i-get-a-single-keypress-at-a-time
+
+    @return Character inputted by user. None if there isn't any.
+    '''
+    import termios, fcntl, sys, os
+    fd = sys.stdin.fileno()
+
+    oldterm = termios.tcgetattr(fd)
+    newattr = termios.tcgetattr(fd)
+    newattr[3] = newattr[3] & ~termios.ICANON & ~termios.ECHO
+    termios.tcsetattr(fd, termios.TCSANOW, newattr)
+
+    oldflags = fcntl.fcntl(fd, fcntl.F_GETFL)
+    fcntl.fcntl(fd, fcntl.F_SETFL, oldflags | os.O_NONBLOCK)
+
+    try:
+        try:
+            c = sys.stdin.read(1)
+            if c != '':
+                return c
+            else:
+                return None
+        except IOError:
+            return None
+    finally:
+        termios.tcsetattr(fd, termios.TCSAFLUSH, oldterm)
+        fcntl.fcntl(fd, fcntl.F_SETFL, oldflags)
+
+def process_command(c):
+    '''
+    Process the user's command.
+
+    Does nothing if its not a known command.
+    '''
+    # quick exit if None b/c we'll be getting a lot of these
+    if c == None:
+        return
+
+    def quit():
+        print('\nexiting')
+        sys.exit(0)
+
+    def help_info():
+        import textwrap
+        print(textwrap.dedent('''
+            q/esc/Ctrl-D - quit
+            h - help
+            '''))
+
+    def nop():
+        print('\nDEBUG: c = %r' % c)
+        pass
+
+    command_map = {
+            'q' : quit,
+            '\x1b' : quit,      # escape
+            '\x00' : quit,      # Ctrl-D
+            'h' : help_info,
+            }
+
+    command_func = command_map.get(c, nop)
+    command_func()
+
 
 def main():
     duration, endTime = getDuration()
@@ -141,6 +209,9 @@ def main():
         sys.stdout.flush()
         time.sleep(.1)      # TODO: make sleep time dynamic?
                             # so that the progress bar is smooth (but will want to make the max 1 sec)
+
+        c = get_user_command()
+        process_command(c)
 
 
     print("\n%s" % message)
